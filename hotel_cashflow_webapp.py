@@ -34,10 +34,7 @@ def esporta_excel():
         df_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
 
         # === Cashflow Mensile ===
-        # Prova a recuperare 'Categoria', oppure costruiscila da 'CatShort' se serve
-if "Categoria" not in df_spese.columns and "CatShort" in df_spese.columns:
-    df_spese["Categoria"] = df_spese["CatShort"].map({"F": "Costi Fissi", "V": "Costi Variabili"})
-        df_spese["Mese"] = pd.to_datetime(df_spese["Data"], errors="coerce").dt.month_name()
+        df_spese["Categoria"] = df_spese["Categoria"].astype(str).str.strip().str.title()
         mesi_tradotti = {
             "January": "Gennaio", "February": "Febbraio", "March": "Marzo", "April": "Aprile",
             "May": "Maggio", "June": "Giugno", "July": "Luglio", "August": "Agosto",

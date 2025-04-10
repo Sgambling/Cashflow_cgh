@@ -14,7 +14,7 @@ uploaded_incassi = st.file_uploader("Carica file Prenotazioni (.xlsx)", type=["x
 df_spese, df_incassi = None, None
 
 if uploaded_spese:
-    df_spese = pd.read_excel(uploaded_spese, skiprows=4)
+    df_spese = pd.read_excel(uploaded_spese)
     st.success("File Spese caricato correttamente.")
     st.dataframe(df_spese.head())
 

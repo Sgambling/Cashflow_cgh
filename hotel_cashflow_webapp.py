@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 st.set_page_config(page_title="Hotel Cashflow", layout="wide")
-st.title("Hotel Cashflow - Web App v3")
+st.title("Hotel Cashflow - Web App v4")
 
 uploaded_spese = st.file_uploader("Carica file Spese (.xlsx)", type=["xlsx"], key="spese")
 uploaded_incassi = st.file_uploader("Carica file Prenotazioni (.xlsx)", type=["xlsx"], key="incassi")
@@ -15,6 +15,7 @@ df_spese, df_incassi = None, None
 
 if uploaded_spese:
     df_spese = pd.read_excel(uploaded_spese)
+    df_spese["Importo"] = pd.to_numeric(df_spese["Imponibile"], errors="coerce").fillna(0) + pd.to_numeric(df_spese["IVA"], errors="coerce").fillna(0)
     st.success("File Spese caricato correttamente.")
     st.dataframe(df_spese.head())
 
@@ -31,12 +32,6 @@ def esporta_excel():
         return None
 
     # Prepara spese
-    if "Categoria" not in df_spese.columns and "CatShort" in df_spese.columns:
-        df_spese["Categoria"] = df_spese["CatShort"].map({"F": "Costi Fissi", "V": "Costi Variabili"})
-
-    if "Importo" not in df_spese.columns and "Imponibile" in df_spese.columns and "IVA" in df_spese.columns:
-        df_spese["Importo"] = pd.to_numeric(df_spese["Imponibile"], errors="coerce").fillna(0) + pd.to_numeric(df_spese["IVA"], errors="coerce").fillna(0)
-
     df_spese["Categoria"] = df_spese["Categoria"].astype(str).str.strip().str.title()
     df_spese["Mese"] = pd.to_datetime(df_spese["Data"], errors="coerce").dt.month_name()
 
@@ -110,4 +105,5 @@ if uploaded_spese is not None and uploaded_incassi is not None:
         if file_excel:
             st.success("File Excel generato correttamente!")
             st.download_button(label="Scarica Excel", data=file_excel, file_name="cashflow_riepilogo.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 

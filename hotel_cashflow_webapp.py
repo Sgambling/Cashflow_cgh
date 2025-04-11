@@ -103,7 +103,16 @@ def esporta_excel():
         df_spese.to_excel(writer, sheet_name="Dettaglio Spese", index=False)
         pivot_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
         cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
+  
+    # Save a timestamped copy to archive/
+    os.makedirs("archive", exist_ok=True)  # creates folder if it doesn't exist
+    timestamp = datetime.now().strftime("%Y_%m_%d_%H%M")
+    archive_filename = f"archive/cashflow_{timestamp}.xlsx"
 
+    with pd.ExcelWriter(archive_filename, engine="openpyxl") as writer:
+    df_spese.to_excel(writer, sheet_name="Dettaglio Spese", index=False)
+    pivot_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
+    cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
     output.seek(0)
     return output
 

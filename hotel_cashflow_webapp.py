@@ -1,6 +1,8 @@
 
 import streamlit as st
 import pandas as pd
+import glob
+import os
 from io import BytesIO
 from datetime import datetime
 import os
@@ -18,7 +20,6 @@ if uploaded_spese:
     df_spese["Importo"] = pd.to_numeric(df_spese["Imponibile"], errors="coerce").fillna(0) + pd.to_numeric(df_spese["IVA"], errors="coerce").fillna(0)
     st.success("File Spese caricato correttamente.")
     st.dataframe(df_spese.head())
-import glob
 
 archived_files = glob.glob("archive/*.xlsx")
 if archived_files:

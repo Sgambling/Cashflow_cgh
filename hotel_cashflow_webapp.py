@@ -100,7 +100,28 @@ def esporta_excel():
         df_spese.to_excel(writer, sheet_name="Dettaglio Spese", index=False)
         pivot_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
         cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
+       # === Formattazione colonne in Euro (€) ===
+    workbook = writer.book
+    euro_fmt = workbook.add_format({'num_format': '€#,##0.00'})
 
+    ws_spese = writer.sheets["Dettaglio Spese"]
+    ws_incassi = writer.sheets["Dettaglio Incassi"]
+    ws_cf = writer.sheets["Cashflow Mensile"]
+
+    # Colonna "Importo" in Spese
+    if "Importo" in df_spese.columns:
+        col_idx = df_spese.columns.get_loc("Importo")
+        col_letter = chr(ord("A") + col_idx)
+        ws_spese.set_column(f"{col_letter}:{col_letter}", 18, euro_fmt)
+
+    # Incassi: da STD-AD a Totale
+    for col in ["STD-AD", "STD-CON", "SUP-CON", "Lungo Termine", "Totale"]:
+        if col in pivot_incassi.columns:
+            idx = pivot_incassi.columns.get_loc(col)
+            ws_incassi.set_column(idx + 1, idx + 1, 18, euro_fmt)
+
+    # Cashflow: colonne da B a F
+    ws_cf.set_column("B:F", 18, euro_fmt)
         workbook = writer.book
         euro_fmt = workbook.add_format({'num_format': '€#,##0.00'})
         writer.sheets["Dettaglio Spese"].set_column("E:E", 18, euro_fmt)

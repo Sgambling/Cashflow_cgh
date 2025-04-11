@@ -5,10 +5,9 @@ import glob
 import os
 from io import BytesIO
 from datetime import datetime
-import os
 
 st.set_page_config(page_title="Hotel Cashflow", layout="wide")
-st.title("Hotel Cashflow - Web App v4")
+st.title("Hotel Cashflow - Web App v5")
 
 uploaded_spese = st.file_uploader("Carica file Spese (.xlsx)", type=["xlsx"], key="spese")
 uploaded_incassi = st.file_uploader("Carica file Prenotazioni (.xlsx)", type=["xlsx"], key="incassi")
@@ -21,18 +20,22 @@ if uploaded_spese:
     st.success("File Spese caricato correttamente.")
     st.dataframe(df_spese.head())
 
-archived_files = glob.glob("archive/*.xlsx")
-if archived_files:
-    st.markdown("---")
-    st.subheader("Archivio Cashflow")
-    selected = st.selectbox("Seleziona un file archiviato:", sorted(archived_files, reverse=True))
-    with open(selected, "rb") as f:
-        st.download_button("Scarica archivio selezionato", f, file_name=os.path.basename(selected))
 if uploaded_incassi:
     raw_incassi = pd.read_excel(uploaded_incassi)
     st.success("File Prenotazioni caricato correttamente.")
     st.dataframe(raw_incassi.head())
 
+# === ARCHIVIO ===
+archived_files = glob.glob("archive/*.xlsx")
+if archived_files:
+    st.markdown("---")
+    st.subheader("Archivio Cashflow")
+    file_map = {os.path.basename(f): f for f in sorted(archived_files, reverse=True)}
+    selected = st.selectbox("Seleziona un file archiviato:", list(file_map.keys()))
+    with open(file_map[selected], "rb") as f:
+        st.download_button("Scarica archivio selezionato", f, file_name=selected)
+
+# === FUNZIONE ESPORTA ===
 def esporta_excel():
     output = BytesIO()
 
@@ -51,7 +54,7 @@ def esporta_excel():
     }
     df_spese["Mese"] = df_spese["Mese"].map(mesi_tradotti)
 
-    # === Prepara incassi da prenotazioni ===
+    # Prepara incassi
     df_incassi = raw_incassi.copy()
     df_incassi["Mese"] = pd.to_datetime(df_incassi["Arrivo"], errors="coerce").dt.month_name()
     df_incassi["Mese"] = df_incassi["Mese"].map(mesi_tradotti)
@@ -86,7 +89,7 @@ def esporta_excel():
     pivot_incassi["Mese"] = pd.Categorical(pivot_incassi["Mese"], categories=mesi_ordine, ordered=True)
     pivot_incassi = pivot_incassi.sort_values("Mese")
 
-    # === Aggregazione spese ===
+    # Aggregazione spese
     spese_mese = df_spese.groupby(["Mese", "Categoria"])["Importo"].sum().unstack(fill_value=0)
     spese_mese = spese_mese.reindex(mesi_ordine).fillna(0)
     spese_mese["Totale Spese"] = spese_mese.sum(axis=1)
@@ -98,32 +101,28 @@ def esporta_excel():
     cashflow["Cumulato"] = cashflow["Risultato Netto"].cumsum()
     cashflow = cashflow.reset_index()
 
-   
-    # Write latest version to memory for download
+    # Salva in memoria per download
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df_spese.to_excel(writer, sheet_name="Dettaglio Spese", index=False)
         pivot_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
         cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
 
-    # Write a copy to archive folder
+    # Salva copia nell'archivio
     os.makedirs("archive", exist_ok=True)
     timestamp = datetime.now().strftime("%Y_%m_%d_%H%M")
     archive_filename = f"archive/cashflow_{timestamp}.xlsx"
-    
     with pd.ExcelWriter(archive_filename, engine="openpyxl") as archive_writer:
         df_spese.to_excel(archive_writer, sheet_name="Dettaglio Spese", index=False)
         pivot_incassi.to_excel(archive_writer, sheet_name="Dettaglio Incassi", index=False)
         cashflow.to_excel(archive_writer, sheet_name="Cashflow Mensile", index=False)
-    
+
     output.seek(0)
     return output
 
-# === Bottone per generare ed esportare ===
+# === PULSANTE PRINCIPALE ===
 if uploaded_spese is not None and uploaded_incassi is not None:
     if st.button("Genera ed Esporta Excel"):
         file_excel = esporta_excel()
         if file_excel:
             st.success("File Excel generato correttamente!")
             st.download_button(label="Scarica Excel", data=file_excel, file_name="cashflow_riepilogo.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-

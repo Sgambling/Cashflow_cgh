@@ -98,12 +98,7 @@ def esporta_excel():
     cashflow["Cumulato"] = cashflow["Risultato Netto"].cumsum()
     cashflow = cashflow.reset_index()
 
-    # === Esportazione
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df_spese.to_excel(writer, sheet_name="Dettaglio Spese", index=False)
-        pivot_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
-        cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
-  
+   
     # Write latest version to memory for download
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df_spese.to_excel(writer, sheet_name="Dettaglio Spese", index=False)

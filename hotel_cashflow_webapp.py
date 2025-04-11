@@ -104,15 +104,22 @@ def esporta_excel():
         pivot_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
         cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
   
-    # Save a timestamped copy to archive/
-    os.makedirs("archive", exist_ok=True)  # creates folder if it doesn't exist
+    # Write latest version to memory for download
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df_spese.to_excel(writer, sheet_name="Dettaglio Spese", index=False)
+        pivot_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
+        cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
+
+    # Write a copy to archive folder
+    os.makedirs("archive", exist_ok=True)
     timestamp = datetime.now().strftime("%Y_%m_%d_%H%M")
     archive_filename = f"archive/cashflow_{timestamp}.xlsx"
-
-    with pd.ExcelWriter(archive_filename, engine="openpyxl") as writer:
-    df_spese.to_excel(writer, sheet_name="Dettaglio Spese", index=False)
-    pivot_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
-    cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
+    
+    with pd.ExcelWriter(archive_filename, engine="openpyxl") as archive_writer:
+        df_spese.to_excel(archive_writer, sheet_name="Dettaglio Spese", index=False)
+        pivot_incassi.to_excel(archive_writer, sheet_name="Dettaglio Incassi", index=False)
+        cashflow.to_excel(archive_writer, sheet_name="Cashflow Mensile", index=False)
+    
     output.seek(0)
     return output
 

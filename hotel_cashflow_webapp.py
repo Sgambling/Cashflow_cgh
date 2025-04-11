@@ -18,7 +18,15 @@ if uploaded_spese:
     df_spese["Importo"] = pd.to_numeric(df_spese["Imponibile"], errors="coerce").fillna(0) + pd.to_numeric(df_spese["IVA"], errors="coerce").fillna(0)
     st.success("File Spese caricato correttamente.")
     st.dataframe(df_spese.head())
+import glob
 
+archived_files = glob.glob("archive/*.xlsx")
+if archived_files:
+    st.markdown("---")
+    st.subheader("Archivio Cashflow")
+    selected = st.selectbox("Seleziona un file archiviato:", sorted(archived_files, reverse=True))
+    with open(selected, "rb") as f:
+        st.download_button("Scarica archivio selezionato", f, file_name=os.path.basename(selected))
 if uploaded_incassi:
     raw_incassi = pd.read_excel(uploaded_incassi)
     st.success("File Prenotazioni caricato correttamente.")

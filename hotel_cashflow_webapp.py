@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import glob
@@ -6,12 +7,12 @@ from io import BytesIO
 from datetime import datetime
 
 st.set_page_config(page_title="Hotel Cashflow", layout="wide")
-st.title("Hotel Cashflow - Web App v6.1")
+st.title("Hotel Cashflow - Web App v6.2")
 
 uploaded_spese = st.file_uploader("Carica file Spese (.xlsx)", type=["xlsx"], key="spese")
 uploaded_incassi = st.file_uploader("Carica file Prenotazioni (.xlsx)", type=["xlsx"], key="incassi")
 
-df_spese, df_incassi = None, None
+df_spese, raw_incassi = None, None
 
 if uploaded_spese:
     df_spese = pd.read_excel(uploaded_spese)
@@ -33,13 +34,13 @@ if archived_files:
     with open(file_map[selected], "rb") as f:
         st.download_button("Scarica archivio selezionato", f, file_name=selected)
 
-    def esporta_excel():
-        global raw_incassi
-        output = BytesIO()
-    
-        if df_spese is None or raw_incassi is None:
-            st.error("Carica entrambi i file per procedere.")
-            return None
+def esporta_excel():
+    global raw_incassi
+    output = BytesIO()
+
+    if df_spese is None or raw_incassi is None:
+        st.error("Carica entrambi i file per procedere.")
+        return None
 
     df_spese["Categoria"] = df_spese["Categoria"].astype(str).str.strip().str.title()
     df_spese["Mese"] = pd.to_datetime(df_spese["Data"], errors="coerce").dt.month_name()
@@ -51,7 +52,6 @@ if archived_files:
     }
     df_spese["Mese"] = df_spese["Mese"].map(mesi_tradotti)
 
-    # Trova dinamicamente la colonna prezzo
     prezzo_col = next((col for col in raw_incassi.columns if "prezzo" in str(col).lower()), None)
     if not prezzo_col:
         st.error("Colonna contenente 'Prezzo' non trovata.")

@@ -6,7 +6,7 @@ from io import BytesIO
 from datetime import datetime
 
 st.set_page_config(page_title="Hotel Cashflow", layout="wide")
-st.title("Hotel Cashflow - Web App v6")
+st.title("Hotel Cashflow - Web App v6 - FIX")
 
 uploaded_spese = st.file_uploader("Carica file Spese (.xlsx)", type=["xlsx"], key="spese")
 uploaded_incassi = st.file_uploader("Carica file Prenotazioni (.xlsx)", type=["xlsx"], key="incassi")
@@ -51,9 +51,18 @@ def esporta_excel():
     df_spese["Mese"] = df_spese["Mese"].map(mesi_tradotti)
 
     df_incassi = raw_incassi.copy()
+
+    # Fix per trovare la colonna prezzo
+    prezzo_col = next((col for col in df_incassi.columns if "prezzo" in col.lower()), None)
+    if prezzo_col:
+        df_incassi.rename(columns={prezzo_col: "Prezzo"}, inplace=True)
+    else:
+        st.error("Colonna prezzo non trovata nel file incassi.")
+        return None
+
     df_incassi["Mese"] = pd.to_datetime(df_incassi["Arrivo"], errors="coerce").dt.month_name()
     df_incassi["Mese"] = df_incassi["Mese"].map(mesi_tradotti)
-    df_incassi["Prezzo(â¬)"] = pd.to_numeric(df_incassi["Prezzo(â¬)"], errors="coerce").fillna(0)
+    df_incassi["Prezzo"] = pd.to_numeric(df_incassi["Prezzo"], errors="coerce").fillna(0)
 
     def mappa_tipologia(alloggio):
         if pd.isna(alloggio):
@@ -72,7 +81,7 @@ def esporta_excel():
 
     df_incassi["Tipologia"] = df_incassi["Alloggio"].map(mappa_tipologia)
 
-    pivot_incassi = df_incassi.pivot_table(index="Mese", columns="Tipologia", values="Prezzo(â¬)", aggfunc="sum", fill_value=0)
+    pivot_incassi = df_incassi.pivot_table(index="Mese", columns="Tipologia", values="Prezzo", aggfunc="sum", fill_value=0)
     for col in ["STD-AD", "STD-CON", "SUP-CON", "Lungo Termine"]:
         if col not in pivot_incassi.columns:
             pivot_incassi[col] = 0

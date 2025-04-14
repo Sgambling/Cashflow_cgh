@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import glob
@@ -6,7 +7,7 @@ from io import BytesIO
 from datetime import datetime
 
 st.set_page_config(page_title="Hotel Cashflow", layout="wide")
-st.title("Hotel Cashflow - Web App v6 - FIX")
+st.title("Hotel Cashflow - Web App v6.1")
 
 uploaded_spese = st.file_uploader("Carica file Spese (.xlsx)", type=["xlsx"], key="spese")
 uploaded_incassi = st.file_uploader("Carica file Prenotazioni (.xlsx)", type=["xlsx"], key="incassi")
@@ -50,20 +51,13 @@ def esporta_excel():
     }
     df_spese["Mese"] = df_spese["Mese"].map(mesi_tradotti)
 
-    # Cerca la colonna "Prezzo" nel file raw prima di copiarlo
-prezzo_col = next((col for col in raw_incassi.columns if "prezzo" in str(col).lower()), None)
-    if prezzo_col:
+    # Trova dinamicamente la colonna prezzo
+    prezzo_col = next((col for col in raw_incassi.columns if "prezzo" in str(col).lower()), None)
+    if not prezzo_col:
+        st.error("Colonna contenente 'Prezzo' non trovata.")
+        return None
     raw_incassi = raw_incassi.rename(columns={prezzo_col: "Prezzo"})
-    else:
-        st.error("Colonna 'Prezzo' non trovata nel file delle prenotazioni.")
-        return None
-
-df_incassi = raw_incassi.copy()
-    if prezzo_col:
-        df_incassi.rename(columns={prezzo_col: "Prezzo"}, inplace=True)
-    else:
-        st.error("Colonna prezzo non trovata nel file incassi.")
-        return None
+    df_incassi = raw_incassi.copy()
 
     df_incassi["Mese"] = pd.to_datetime(df_incassi["Arrivo"], errors="coerce").dt.month_name()
     df_incassi["Mese"] = df_incassi["Mese"].map(mesi_tradotti)
@@ -115,7 +109,7 @@ df_incassi = raw_incassi.copy()
         cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
 
         workbook = writer.book
-        euro_fmt = workbook.add_format({'num_format': 'â¬#,##0.00'})
+        euro_fmt = workbook.add_format({'num_format': '€#,##0.00'})
 
         ws_spese = writer.sheets["Dettaglio Spese"]
         ws_incassi = writer.sheets["Dettaglio Incassi"]

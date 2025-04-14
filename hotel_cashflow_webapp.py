@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import glob
@@ -7,7 +6,7 @@ from io import BytesIO
 from datetime import datetime
 
 st.set_page_config(page_title="Hotel Cashflow", layout="wide")
-st.title("Hotel Cashflow - Web App v5")
+st.title("Hotel Cashflow - Web App v6")
 
 uploaded_spese = st.file_uploader("Carica file Spese (.xlsx)", type=["xlsx"], key="spese")
 uploaded_incassi = st.file_uploader("Carica file Prenotazioni (.xlsx)", type=["xlsx"], key="incassi")
@@ -54,7 +53,7 @@ def esporta_excel():
     df_incassi = raw_incassi.copy()
     df_incassi["Mese"] = pd.to_datetime(df_incassi["Arrivo"], errors="coerce").dt.month_name()
     df_incassi["Mese"] = df_incassi["Mese"].map(mesi_tradotti)
-    df_incassi["Prezzo(€)"] = pd.to_numeric(df_incassi["Prezzo(€)"], errors="coerce").fillna(0)
+    df_incassi["Prezzo(â¬)"] = pd.to_numeric(df_incassi["Prezzo(â¬)"], errors="coerce").fillna(0)
 
     def mappa_tipologia(alloggio):
         if pd.isna(alloggio):
@@ -73,7 +72,7 @@ def esporta_excel():
 
     df_incassi["Tipologia"] = df_incassi["Alloggio"].map(mappa_tipologia)
 
-    pivot_incassi = df_incassi.pivot_table(index="Mese", columns="Tipologia", values="Prezzo(€)", aggfunc="sum", fill_value=0)
+    pivot_incassi = df_incassi.pivot_table(index="Mese", columns="Tipologia", values="Prezzo(â¬)", aggfunc="sum", fill_value=0)
     for col in ["STD-AD", "STD-CON", "SUP-CON", "Lungo Termine"]:
         if col not in pivot_incassi.columns:
             pivot_incassi[col] = 0
@@ -100,48 +99,24 @@ def esporta_excel():
         df_spese.to_excel(writer, sheet_name="Dettaglio Spese", index=False)
         pivot_incassi.to_excel(writer, sheet_name="Dettaglio Incassi", index=False)
         cashflow.to_excel(writer, sheet_name="Cashflow Mensile", index=False)
-       # === Formattazione colonne in Euro (€) ===
-    workbook = writer.book
-    euro_fmt = workbook.add_format({'num_format': '€#,##0.00'})
 
-    ws_spese = writer.sheets["Dettaglio Spese"]
-    ws_incassi = writer.sheets["Dettaglio Incassi"]
-    ws_cf = writer.sheets["Cashflow Mensile"]
-
-    # Colonna "Importo" in Spese
-    if "Importo" in df_spese.columns:
-        col_idx = df_spese.columns.get_loc("Importo")
-        col_letter = chr(ord("A") + col_idx)
-        ws_spese.set_column(f"{col_letter}:{col_letter}", 18, euro_fmt)
-
-    # Incassi: da STD-AD a Totale
-    for col in ["STD-AD", "STD-CON", "SUP-CON", "Lungo Termine", "Totale"]:
-        if col in pivot_incassi.columns:
-            idx = pivot_incassi.columns.get_loc(col)
-            ws_incassi.set_column(idx + 1, idx + 1, 18, euro_fmt)
-
-    # Cashflow: colonne da B a F
-    ws_cf.set_column("B:F", 18, euro_fmt)
         workbook = writer.book
-        euro_fmt = workbook.add_format({'num_format': '€#,##0.00'})
-        writer.sheets["Dettaglio Spese"].set_column("E:E", 18, euro_fmt)
-        writer.sheets["Dettaglio Incassi"].set_column("B:F", 18, euro_fmt)
-        writer.sheets["Cashflow Mensile"].set_column("B:F", 18, euro_fmt)
+        euro_fmt = workbook.add_format({'num_format': 'â¬#,##0.00'})
 
-    os.makedirs("archive", exist_ok=True)
-    timestamp = datetime.now().strftime("%Y_%m_%d_%H%M")
-    archive_filename = f"archive/cashflow_{timestamp}.xlsx"
+        ws_spese = writer.sheets["Dettaglio Spese"]
+        ws_incassi = writer.sheets["Dettaglio Incassi"]
+        ws_cf = writer.sheets["Cashflow Mensile"]
 
-    with pd.ExcelWriter(archive_filename, engine="xlsxwriter") as archive_writer:
-        df_spese.to_excel(archive_writer, sheet_name="Dettaglio Spese", index=False)
-        pivot_incassi.to_excel(archive_writer, sheet_name="Dettaglio Incassi", index=False)
-        cashflow.to_excel(archive_writer, sheet_name="Cashflow Mensile", index=False)
+        if "Importo" in df_spese.columns:
+            idx = df_spese.columns.get_loc("Importo")
+            ws_spese.set_column(idx, idx, 18, euro_fmt)
 
-        workbook = archive_writer.book
-        euro_fmt = workbook.add_format({'num_format': '€#,##0.00'})
-        archive_writer.sheets["Dettaglio Spese"].set_column("E:E", 18, euro_fmt)
-        archive_writer.sheets["Dettaglio Incassi"].set_column("B:F", 18, euro_fmt)
-        archive_writer.sheets["Cashflow Mensile"].set_column("B:F", 18, euro_fmt)
+        for col in ["STD-AD", "STD-CON", "SUP-CON", "Lungo Termine", "Totale"]:
+            if col in pivot_incassi.columns:
+                idx = pivot_incassi.columns.get_loc(col)
+                ws_incassi.set_column(idx + 1, idx + 1, 18, euro_fmt)
+
+        ws_cf.set_column("B:F", 18, euro_fmt)
 
     output.seek(0)
     return output

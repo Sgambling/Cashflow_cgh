@@ -33,12 +33,13 @@ if archived_files:
     with open(file_map[selected], "rb") as f:
         st.download_button("Scarica archivio selezionato", f, file_name=selected)
 
-def esporta_excel():
-    output = BytesIO()
-
-    if df_spese is None or raw_incassi is None:
-        st.error("Carica entrambi i file per procedere.")
-        return None
+    def esporta_excel():
+        global raw_incassi
+        output = BytesIO()
+    
+        if df_spese is None or raw_incassi is None:
+            st.error("Carica entrambi i file per procedere.")
+            return None
 
     df_spese["Categoria"] = df_spese["Categoria"].astype(str).str.strip().str.title()
     df_spese["Mese"] = pd.to_datetime(df_spese["Data"], errors="coerce").dt.month_name()

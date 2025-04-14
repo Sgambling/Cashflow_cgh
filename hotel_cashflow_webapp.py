@@ -50,10 +50,15 @@ def esporta_excel():
     }
     df_spese["Mese"] = df_spese["Mese"].map(mesi_tradotti)
 
-    df_incassi = raw_incassi.copy()
+    # Cerca la colonna "Prezzo" nel file raw prima di copiarlo
+prezzo_col = next((col for col in raw_incassi.columns if "prezzo" in str(col).lower()), None)
+    if prezzo_col:
+    raw_incassi = raw_incassi.rename(columns={prezzo_col: "Prezzo"})
+    else:
+        st.error("Colonna 'Prezzo' non trovata nel file delle prenotazioni.")
+        return None
 
-    # Fix per trovare la colonna prezzo
-    prezzo_col = next((col for col in df_incassi.columns if "prezzo" in col.lower()), None)
+df_incassi = raw_incassi.copy()
     if prezzo_col:
         df_incassi.rename(columns={prezzo_col: "Prezzo"}, inplace=True)
     else:
